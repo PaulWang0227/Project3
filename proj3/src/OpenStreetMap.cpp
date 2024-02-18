@@ -65,12 +65,97 @@ struct COpenStreetMap::SImplementation{
 
         }
 
-        virtual TWayID ID() const noexcept = 0;
-            virtual std::size_t NodeCount() const noexcept = 0;
-            virtual TNodeID GetNodeID(std::size_t index) const noexcept = 0;
-            virtual std::size_t AttributeCount() const noexcept = 0;
-            virtual std::string GetAttributeKey(std::size_t index) const noexcept = 0;
-            virtual bool HasAttribute(const std::string &key) const noexcept = 0;
-            virtual std::string GetAttribute(const std::string &key) const noexcept = 0;
+        TWayID ID() const noexcept override{
+
+        }
+
+        std::size_t NodeCount() const noexcept override{
+
+        }
+
+        TNodeID GetNodeID(std::size_t index) const noexcept override{
+
+        }
+
+        std::size_t AttributeCount() const noexcept override{
+
+        }
+
+        std::string GetAttributeKey(std::size_t index) const noexcept override{
+
+        }
+
+        bool HasAttribute(const std::string &key) const noexcept override{
+
+        }
+        std::string GetAttribute(const std::string &key) const noexcept override{
+            
+        }
     };
+
+    std::unordered_map<TNodeID, std::shared_ptr<CStreetMap::SNode> > DNodeIDToNode;
+    std::vector< std::shared_ptr<CStreetMap::SNode> > DNodesByIndex;
+
+    SImplementation(std::shared_ptr<CXMLReader> src){
+        SXMLEntity TempEntity;
+
+        while(src->ReadEntity(TempEntity,true)){
+            if((TempEntity.DNameData == "osm")&&(SXMLEntity::EType::EndElement == TempEntity.DType)){
+                //reached end
+                break;
+            }
+            else if((TempEntity.DNameData == "node")&&(SXMLEntity::EType::StartElement == TempEntity.DType)){
+                //parse node
+                TNodeID NewNodeID = std::stoull(TempEntity.AttributeValue("id"));
+                double Lat = std::stod(TempEntity.AttributeValue("lat"));
+                double Lon = std::stod(TempEntity.AttributeValue("lon"));
+                TLocation NewNodeLocation = std::make_pair(Lat,Lon);
+                auto NewNode = std::make_shared<SNode>(NewNodeID,NewNodeLocation);
+                DNodesByIndex.push_back(NewNode);
+                DNodeIDToNode[NewNodeID] = NewNode;
+                while(src->ReadEntity(TempEntity,true)){
+                    if((TempEntity.DNameData == "node")&&(SXMLEntity::EType::EndElement == TempEntity.DType)){
+                        break;
+                    }
+                    else if((TempEntity.DNameData == "tag")&&(SXMLEntity::EType::StartElement == TempEntity.DType)){
+                        NewNode->SetAttribute(TempEntity.AttributeValue("k"),TempEntity.AttributeValue("v"));
+                    }
+                }
+            }
+            else if((TempEntity.DNameData == "way")&&(SXMLEntity::EType::StartElement == TempEntity.DType)){
+                //parse way
+            }
+        }
+    }
+
+    std::size_t NodeCount() const {
+        return DNodesByIndex.size();
+    }
+    
+    std::size_t WayCount() const noexcept {
+        
+    }
+    
+    std::shared_ptr<CStreetMap::SNode> NodeByIndex(std::size_t index) const {
+        if(index < DNodesByIndex.size()){
+            return DNodesByIndex[index];
+        }
+        return nullptr;
+    }
+    
+    std::shared_ptr<CStreetMap::SNode> NodeByID(TNodeID id) const noexcept {
+        auto Search = DNodeIDToNode.find(id);
+        if(DNodeIDToNode.end() != Search){
+            return Search->second;
+        }
+        return nullptr;
+    }
+    
+    std::shared_ptr<CStreetMap::SWay> WayByIndex(std::size_t index) const noexcept {
+        
+    }
+    
+    std::shared_ptr<CStreetMap::SWay> WayByID(TWayID id) const noexcept {
+        
+    }
 };
