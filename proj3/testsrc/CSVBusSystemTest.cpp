@@ -1,4 +1,6 @@
 #include <gtest/gtest.h>
+#include "CSVBusSystem.h"
+
 TEST(CSVBusSystem, SimpleExampleTest){
     auto InStreamStops = std::make_shared<CStringDataSource>("stop_id,node_id\n1,1001");
     auto InStreamRoutes = std::make_shared<CStringDataSource>("route,stop_id");
