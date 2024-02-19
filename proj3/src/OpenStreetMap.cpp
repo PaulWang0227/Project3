@@ -3,109 +3,115 @@
 #include <vector>
 
 struct COpenStreetMap::SImplementation{
-
+    //SNode interface
     struct SNode : public CStreetMap::SNode{
+        //SNode variables
         TNodeID DID;
         TLocation DLocation;
         std::unordered_map<std::string, std::string> DAttributes;
         std::vector<std::string> DAttributeKeys;
 
+        //Constructor
         SNode(){
 
         }
-
+        //Destructor
         ~SNode(){
 
         }
 
         TNodeID ID() const noexcept override{
-            return DID;
+            return DID; //Returns the id of the SNode
         }
 
         TLocation Location() const noexcept override{
-            return DLocation;
+            return DLocation; //Returns the lat/lon location of the SNode
         }
 
         std::size_t AttributeCount() const noexcept override{
-            return DAttributeKeys.size();
+            return DAttributeKeys.size(); //Returns the number of attributes attached to the SNode
         }
 
         std::string GetAttributeKey(std::size_t index) const noexcept override{
             if(index <DAttributeKeys.size()){
-                return DAttributeKeys[index];
+                return DAttributeKeys[index]; //Returns the key of the attribute at index
             }
-            return std::string();
+            return std::string(); //Returns empty string if index is greater than or equal to AttributeCount()
         }
 
         bool HasAttribute(const std::string &key) const noexcept override{
             auto Search = DAttributes.find(key);
-            return DAttributes.end() != Search;
+            return DAttributes.end() != Search; //Returns if the attribute is attached to the SNode
         }
 
         std::string GetAttribute(const std::string &key) const noexcept override{
             auto Search = DAttributes.find(key);
             if(DAttributes.end() != Search){
-                return Search->second;
+                return Search->second; //Returns the value of the attribute specified by key
             }
-            return std::string();
+            return std::string(); //Returns empty string if key hasn't been attached to SNode
         }
 
         void SetAttribute(const std::string &key, const std::string &value){
             DAttributeKeys.push_back(key);
-            DAttributes[key] = value;
+            DAttributes[key] = value; //Returns if the attribute is attached to the SNode
         }
     };
 
+    //SWay Interface
     struct SWay : public CStreetMap::SWay{
-
+        //SWay Variables
         TWayID WID;
         std::vector<TNodeID> NodeIDs;
         std::unordered_map<std::string, std::string> Attributes;
         std::vector<std::string> AttributeKeys;
 
+        //Constructor
         SWay(){
 
         }
 
+        //Destructor
         ~SWay(){
 
         }
 
         TWayID ID() const noexcept override{
-            return WID;
+            return WID; // Returns the id of the SWay
         }
 
         std::size_t NodeCount() const noexcept override{
-            return NodeIDs.size();
+            return NodeIDs.size(); // Returns the number of nodes in the way
         }
 
         TNodeID GetNodeID(std::size_t index) const noexcept override{
             if(index < NodeIDs.size()){
-                return NodeIDs[index];
+                return NodeIDs[index]; //Returns the node id of the node at index
             }
+            return InvalidNodeID; //Returns InvalidNodeID if index is greater than or equal to NodeCount()
         }
 
         std::size_t AttributeCount() const noexcept override{
-            return Attributes.size();
+            return Attributes.size(); //Returns the number of attributes attached to the SWay
         }
 
         std::string GetAttributeKey(std::size_t index) const noexcept override{
             if(index < AttributeKeys.size()){
-                return AttributeKeys[index];
+                return AttributeKeys[index]; //Returns the key of the attribute at index
             }
-            return std::string();
+            return std::string(); //Returns empty string if index is greater than or equal to AttributeCount()
         }
 
         bool HasAttribute(const std::string &key) const noexcept override{
-            return Attributes.find(key) != Attributes.end();
+            return Attributes.find(key) != Attributes.end(); //Returns if the attribute is attached to the SWay
         }
 
         std::string GetAttribute(const std::string &key) const noexcept override{
             auto it = Attributes.find(key);
             if (it != Attributes.end()) {
-                return it->second;
+                return it->second; //Returns the value of the attribute specified by key
             }
-            return std::string();
+            return std::string(); //Returns empty string if key hasn't been attached to SWay
         }
     };
 
