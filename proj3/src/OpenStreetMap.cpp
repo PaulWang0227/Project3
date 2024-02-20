@@ -12,12 +12,12 @@ struct COpenStreetMap::SImplementation{
         std::vector<std::string> DAttributeKeys;
 
         //Constructor
-        SNode(){
-
+        SNode(TNodeID id, TLocation location)
+        : DID(id), DLocation(location) {
         }
         //Destructor
         ~SNode(){
-
+        
         }
 
         TNodeID ID() const noexcept override{
@@ -68,7 +68,6 @@ struct COpenStreetMap::SImplementation{
 
         //Constructor
         SWay(){
-
         }
 
         //Destructor
@@ -178,7 +177,7 @@ struct COpenStreetMap::SImplementation{
         }
     }
 
-    std::size_t NodeCount() const {
+    std::size_t NodeCount() const noexcept{
         return DNodesByIndex.size();
     }
     
@@ -186,7 +185,7 @@ struct COpenStreetMap::SImplementation{
         return DWaysByIndex.size();
     }
     
-    std::shared_ptr<CStreetMap::SNode> NodeByIndex(std::size_t index) const {
+    std::shared_ptr<CStreetMap::SNode> NodeByIndex(std::size_t index) const noexcept {
         if(index < DNodesByIndex.size()){
             return DNodesByIndex[index];
         }
@@ -216,3 +215,27 @@ struct COpenStreetMap::SImplementation{
         return nullptr;
     }
 };
+
+COpenStreetMap::COpenStreetMap(std::shared_ptr<CXMLReader> src){
+    DImplementation=std::make_unique<SImplementation>(src);
+}
+COpenStreetMap::~COpenStreetMap()=default;
+
+std::size_t COpenStreetMap::NodeCount() const noexcept{
+    return DImplementation->NodeCount();
+}
+std::size_t COpenStreetMap::WayCount() const noexcept{
+     return DImplementation->WayCount();
+}
+std::shared_ptr<CStreetMap::SNode> COpenStreetMap::NodeByIndex(std::size_t index) const noexcept{
+     return DImplementation->NodeByIndex(index);
+}
+ std::shared_ptr<CStreetMap::SNode> COpenStreetMap::NodeByID(TNodeID id) const noexcept {
+    return DImplementation->NodeByID(id);
+ }
+ std::shared_ptr<CStreetMap::SWay> COpenStreetMap::WayByIndex(std::size_t index) const noexcept {
+    return DImplementation->WayByIndex(index);
+ }
+ std::shared_ptr<CStreetMap::SWay> COpenStreetMap::WayByID(TWayID id) const noexcept {
+    return DImplementation->WayByID(id);
+ }
