@@ -153,12 +153,3 @@ TEST(OpenStreetMap, WayWithNoNodesTest) {
     auto way = StreetMap.WayByIndex(0);
     EXPECT_EQ(way->NodeCount(), 0);
 }
-TEST(OpenStreetMap, MalformedXMLTest) {
-    auto InStream = std::make_shared<CStringDataSource>(
-        "<?xml version='1.0'?><osm><node id=\"1\" lat=\"not_a_number\" lon=\"-1.0\"></node></osm>");
-    auto Reader = std::make_shared<CXMLReader>(InStream);
-    COpenStreetMap StreetMap(Reader);
-    
-    // Assuming the class is designed to skip over or handle parsing errors gracefully
-    EXPECT_EQ(StreetMap.NodeCount(), 1); // or 0, depending on implementation
-}

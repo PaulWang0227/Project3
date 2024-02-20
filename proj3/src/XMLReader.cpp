@@ -61,32 +61,45 @@ struct CXMLReader::SImplementation{
     bool End() const{
         return DEntityQueue.empty() && DDataSource->End();
     };
-    bool ReadEntity(SXMLEntity &entity, bool skipcdata){
-        //Reader from source if necessary
-        //Pass to XMLParser
-        //Return Entity
-        std::vector<char> DataBuffer;
-        if (!DDataSource->Read(DataBuffer, 256)) {
-        return false;
-        }
-        while(DEntityQueue.empty()){
+   bool ReadEntity(SXMLEntity &entity, bool skipcdata) {
+    if(DEntityQueue.empty()) {
+        std::vector<char> DataBuffer(1024); // Adjust buffer size as needed
+        size_t ReadLength = 0;
+        bool EndOfData = false;
 
-            if(DDataSource->Read(DataBuffer, 256)){
-                XML_Parse(DXMLParser,DataBuffer.data(),DataBuffer.size(), DataBuffer.size()<256);
-            }
-            else{
-                XML_Parse(DXMLParser,DataBuffer.data(),0, true);
+        // Keep reading and parsing until we find an entity or run out of data
+        while(DEntityQueue.empty() && !EndOfData) {
+            if(DDataSource->Read(DataBuffer, DataBuffer.size())) {
+                ReadLength = DataBuffer.size();
+            } else {
+                EndOfData = true; // No more data to read
+                ReadLength = 0; // Ensure we call XML_Parse with isFinal = true
             }
 
+            // Parse the data read from the source
+            if(XML_Parse(DXMLParser, DataBuffer.data(), ReadLength, EndOfData) == XML_STATUS_ERROR) {
+                // Handle parsing error (not shown here)
+                return false;
+            }
         }
-        if(DEntityQueue.empty()){
-            return false;
+    }
+
+    // Now check if we have an entity in the queue
+    while(!DEntityQueue.empty()) {
+        const SXMLEntity& frontEntity = DEntityQueue.front();
+        if(skipcdata && frontEntity.DType == SXMLEntity::EType::CharData) {
+            DEntityQueue.pop(); // Skip this entity and check the next one
+            continue;
         }
-        entity=DEntityQueue.front();
+        // Found a suitable entity to return
+        entity = frontEntity;
         DEntityQueue.pop();
         return true;
+    }
 
-   };
+    // If we get here, it means there were no suitable entities to return
+    return false;
+}
 
 };
 CXMLReader::CXMLReader(std::shared_ptr< CDataSource > src){
