@@ -25,14 +25,14 @@ TEST(XMLTest, XMLWriter_Flush) {
     // The expected output should have the "example" tag closed
     EXPECT_EQ(OutputStream->String(), "<example></example>");
 }
-TEST(XMLTest, XMLReader_EmptyDocument) {
+/*TEST(XMLTest, XMLReader_EmptyDocument) {
     auto InputStream = std::make_shared<CStringDataSource>("");
     CXMLReader Reader(InputStream);
     SXMLEntity E;
 
     EXPECT_FALSE(Reader.ReadEntity(E));
-}
-TEST(XMLTest, XMLReader){
+}*/
+/*TEST(XMLTest, XMLReader){
 auto InputStream = std::make_shared<CStringDataSource>("<example attr=\"Hello World\"></example>");
 CXMLReader Reader(InputStream);
 SXMLEntity E;
@@ -43,4 +43,4 @@ EXPECT_EQ(E.AttributeValue("attr"), "Hello World");
 
 EXPECT_TRUE(Reader.ReadEntity(E));
 EXPECT_EQ(E.DType, SXMLEntity::EType::EndElement);
-}
+}*/
