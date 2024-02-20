@@ -44,11 +44,11 @@ struct CCSVBusSystem::SImplementation {
             return RName;
         }
 
-        std::size_t StopCount() const noexcept {
+        std::size_t StopCount() const noexcept override{
             return StopIDs.size();
         }
 
-        TStopID GetStopID(std::size_t index) const noexcept {
+        TStopID GetStopID(std::size_t index) const noexcept override{
             if (index < StopIDs.size()) {
                 return StopIDs[index];
             }
@@ -63,41 +63,72 @@ struct CCSVBusSystem::SImplementation {
     std::vector<std::shared_ptr<SRoute>> RoutesByIndex;
 
     SImplementation(std::shared_ptr<CDSVReader> stopsrc, std::shared_ptr<CDSVReader> routesrc) {
-        // Direct parsing for stops
-        std::vector<std::string> stopRow;
-        while (stopsrc->ReadRow(stopRow)) {
-            if (stopRow.size() < 2) continue; // Ensure there are at least two columns: stop_id and node_id
-
-            TStopID stopID = std::stoull(stopRow[0]);
-            CStreetMap::TNodeID nodeID = std::stoull(stopRow[1]); // Assume second column is node_id or equivalent location identifier
-
-            auto stop = std::make_shared<SStop>(stopID, nodeID);
-            StopsByID[stopID] = stop;
-            StopsByIndex.push_back(stop);
-        }
-
-        // Direct parsing for routes
-        std::vector<std::string> routeRow;
-        std::unordered_map<std::string, std::vector<TStopID>> routeStopsTemp; // Temporarily hold stops for each route
-
-        while (routesrc->ReadRow(routeRow)) {
-            if (routeRow.size() < 2) continue; // Ensure there are at least two columns: route and stop_id
-
-            std::string routeName = routeRow[0];
-            TStopID stopID = std::stoull(routeRow[1]);
-
-            routeStopsTemp[routeName].push_back(stopID);
-        }
-
-        // Construct routes from temporary map
-        for (const auto& routePair : routeStopsTemp) {
-            auto route = std::make_shared<SRoute>();
-            route->RName = routePair.first;
-            route->StopIDs = routePair.second; // Assigning collected stop IDs to the route
-            RoutesByName[route->RName] = route;
-            RoutesByIndex.push_back(route);
-        }
+    std::vector<std::string> stopRow;
+    bool isFirstRowStops = true; // To skip the header for stops
+    
+    // Corrected parsing logic for stops
+    // Assuming isFirstRowStops is a boolean flag initialized to true before this loop
+    while (stopsrc->ReadRow(stopRow)) {
+    if (isFirstRowStops) {
+        isFirstRowStops = false; // Skip the first row (headers)
+        continue;
     }
+
+    // Ensure that the row has at least 2 columns before proceeding
+    if (stopRow.size() < 2) {
+        continue; // Skip rows that don't have at least two columns
+    }
+
+    // Parse the stop ID and node ID from the row
+    TStopID stopID = std::stoull(stopRow[0]);
+    CStreetMap::TNodeID nodeID = std::stoull(stopRow[1]);
+
+    // Create a new SStop object and store it
+    auto stop = std::make_shared<SStop>(stopID, nodeID);
+    StopsByID[stopID] = stop;
+    StopsByIndex.push_back(stop);
+}
+
+
+    std::unordered_map<std::string, std::vector<TStopID>> routeStopsTemp;
+    std::vector<std::string> routeRow;
+    bool isFirstRowRoutes = true; // To skip the header for routes
+
+// Parsing logic for routes
+while (routesrc->ReadRow(routeRow)) {
+    if (isFirstRowRoutes) {
+        isFirstRowRoutes = false; // Skip the first row (header)
+        continue;
+    }
+
+    // Proceed only if the row has at least two columns: route name and stop ID
+    if (routeRow.size() < 2) {
+        // If there are not at least two columns, skip this row
+        continue;
+    }
+
+    std::string routeName = routeRow[0];
+    TStopID stopID = std::stoull(routeRow[1]);
+
+    // Add the stop ID to the vector of stop IDs for this route name
+    routeStopsTemp[routeName].push_back(stopID);
+}
+
+// Construct routes from the temporary map
+for (const auto& routePair : routeStopsTemp) {
+    auto route = std::make_shared<SRoute>();
+    route->RName = routePair.first; // The route name
+    route->StopIDs = routePair.second; // Vector of stop IDs associated with this route
+
+    // Store the newly created route in the appropriate data structures for later retrieval
+    RoutesByName[route->RName] = route;
+    RoutesByIndex.push_back(route);
+}
+
+}
+
+
+
 
     // Returns the number of stops in the system
     std::size_t StopCount() const noexcept{
@@ -158,20 +189,20 @@ std::size_t CCSVBusSystem::RouteCount() const noexcept {
 
 // Returns the stop specified by the index
 std::shared_ptr<CBusSystem::SStop> CCSVBusSystem::StopByIndex(std::size_t index) const noexcept {
-    return StopByIndex(index);
+    return DImplementation->StopByIndex(index);
 }
 
 // Returns the stop specified by the stop id
 std::shared_ptr<CBusSystem::SStop> CCSVBusSystem::StopByID(TStopID id) const noexcept {
-    return StopByID(id);
+    return DImplementation->StopByID(id);
 }
 
 // Returns the route specified by the index
 std::shared_ptr<CBusSystem::SRoute> CCSVBusSystem::RouteByIndex(std::size_t index) const noexcept {
-    return RouteByIndex(index);
+    return DImplementation->RouteByIndex(index);
 }
 
 // Returns the route specified by the name
 std::shared_ptr<CBusSystem::SRoute> CCSVBusSystem::RouteByName(const std::string &name) const noexcept {
-    return RouteByName(name);
+    return DImplementation->RouteByName(name);
 }
